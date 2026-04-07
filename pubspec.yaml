@@ -9,7 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  usb_serial: ^0.4.1
+  usb_serial: ^0.5.2
   path_provider: ^2.1.2
   intl: ^0.18.1
   permission_handler: ^11.3.0
