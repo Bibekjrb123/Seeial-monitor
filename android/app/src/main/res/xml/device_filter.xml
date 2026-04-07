@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- CH340/CH341 — NodeMCU ESP8266, cheap Arduino Nano clones -->
+    <usb-device vendor-id="6790"/>
+    <!-- CP2102/CP210x — most ESP32, ESP8266 devboards -->
+    <usb-device vendor-id="4292"/>
+    <!-- FTDI FT232 — Arduino Uno R3, Mega (original) -->
+    <usb-device vendor-id="1027"/>
+    <!-- ATmega16U2 — Arduino Uno/Mega original -->
+    <usb-device vendor-id="9025"/>
+    <!-- Prolific PL2303 -->
+    <usb-device vendor-id="1659"/>
+    <!-- Espressif native USB — ESP32-S2, ESP32-S3 -->
+    <usb-device vendor-id="12346"/>
+</resources>
