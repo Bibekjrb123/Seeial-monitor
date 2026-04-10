@@ -22,10 +22,10 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
       - name: Build APK
-        run: flutter build apk --debug
+       run: flutter build apk --release --no-tree-shake-icons
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: ArduinoScope-APK
-          path: build/app/outputs/flutter-apk/app-debug.apk
+         path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
