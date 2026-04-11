@@ -63,6 +63,7 @@ class _SerialMonitorPageState extends State<SerialMonitorPage> {
   bool _connected = false;
   StreamSubscription? _sub;
   String _buffer = '';
+  Timer? _flushTimer;  // ← Timer for Serial.print()
   int _baudIdx = 4, _eolIdx = 1;
   bool _showTs = true, _autoScroll = true;
   final List<LogEntry> _log = [];
@@ -83,11 +84,20 @@ class _SerialMonitorPageState extends State<SerialMonitorPage> {
   }
 
   @override
-  void dispose() { _disconnect(); _scroll.dispose(); _sendCtrl.dispose(); _sendFocus.dispose(); super.dispose(); }
+  void dispose() {
+    _flushTimer?.cancel();
+    _disconnect();
+    _scroll.dispose();
+    _sendCtrl.dispose();
+    _sendFocus.dispose();
+    super.dispose();
+  }
 
   void _addLog(String msg, LogType type) {
     setState(() { _log.add(LogEntry(msg, type)); if (_log.length > 500) _log.removeAt(0); });
-    if (_autoScroll) WidgetsBinding.instance.addPostFrameCallback((_) { if (_scroll.hasClients) _scroll.animateTo(_scroll.position.maxScrollExtent, duration: const Duration(milliseconds: 100), curve: Curves.easeOut); });
+    if (_autoScroll) WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scroll.hasClients) _scroll.animateTo(_scroll.position.maxScrollExtent, duration: const Duration(milliseconds: 100), curve: Curves.easeOut);
+    });
   }
 
   Future<void> _connect() async {
@@ -114,15 +124,31 @@ class _SerialMonitorPageState extends State<SerialMonitorPage> {
     _addLog('Failed to open any device', LogType.err);
   }
 
+  // ── Serial.print() + Serial.println() dono support ──────────
   void _onData(Uint8List data) {
     _rxBytes += data.length;
     _buffer += String.fromCharCodes(data);
+
+    // Split on newline — Serial.println() ke liye
     final lines = _buffer.split('\n');
     _buffer = lines.removeLast();
-    for (final line in lines) { final c = line.trimRight(); if (c.isNotEmpty) _addLog(c, LogType.rx); }
+    for (final line in lines) {
+      final c = line.trimRight();
+      if (c.isNotEmpty) _addLog(c, LogType.rx);
+    }
+
+    // Timer — Serial.print() ke liye (500ms baad flush)
+    _flushTimer?.cancel();
+    _flushTimer = Timer(const Duration(milliseconds: 500), () {
+      if (_buffer.isNotEmpty) {
+        _addLog(_buffer.trimRight(), LogType.rx);
+        _buffer = '';
+      }
+    });
   }
 
   Future<void> _disconnect() async {
+    _flushTimer?.cancel();
     await _sub?.cancel(); _sub = null;
     try { await _port?.close(); } catch (_) {}
     _port = null;
@@ -190,7 +216,7 @@ class _SerialMonitorPageState extends State<SerialMonitorPage> {
               style: TextStyle(fontFamily: kF, fontSize: 18, fontWeight: FontWeight.bold),
               children: [
                 TextSpan(text: 'Serial', style: TextStyle(color: kGreen)),
-                TextSpan(text: 'monitor', style: TextStyle(color: Colors.white)),
+                TextSpan(text: 'Monitor', style: TextStyle(color: Colors.white)),
               ],
             )),
             const Text('by Bibek Biswal',
